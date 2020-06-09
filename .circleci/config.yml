@@ -1,0 +1,68 @@
+version: 2
+
+jobs:
+  staging_build_image_and_push:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Login to ACR
+          command: echo $DOCKER_PASS | docker login $REGISTRY_NAME -u $DOCKER_USER --password-stdin
+      - run:
+          name: Build Docker Web image
+          command: >-
+            docker build
+            --tag jitsi-web:staging web/
+      - run:
+          name: Tag Docker Web image
+          command: docker image tag jitsi-web:staging $REGISTRY_NAME/jitsi-web:staging
+      - run:
+          name: Push Docker image to ACR
+          command: docker push $REGISTRY_NAME/jitsi-web:staging
+
+      - run:
+          name: Build Docker prosody image
+          command: >-
+            docker build
+            --tag jitsi-prosody:staging prosody/
+      - run:
+          name: Tag Docker prosody image
+          command: docker image tag jitsi-prosody:staging $REGISTRY_NAME/jitsi-prosody:staging        
+      - run:
+          name: Push Docker image to ACR
+          command: docker push $REGISTRY_NAME/jitsi-prosody:staging
+
+      - run:
+          name: Build Docker jicofo image
+          command: >-
+            docker build
+            --tag jitsi-jicofo:staging jicofo/
+      - run:
+          name: Tag Docker jicofo image
+          command: docker image tag jitsi-jicofo:staging $REGISTRY_NAME/jitsi-jicofo:staging
+      - run:
+          name: Push Docker image to ACR
+          command: docker push $REGISTRY_NAME/jitsi-jicofo:staging
+
+      - run:
+          name: Build Docker jvb image
+          command: >-
+            docker build
+            --tag jitsi-jvb:staging jvb/
+      - run:
+          name: Tag Docker jvb image
+          command: docker image tag jitsi-jvb:staging $REGISTRY_NAME/jitsi-jvb:staging
+      - run:
+          name: Push Docker image to ACR
+          command: docker push $REGISTRY_NAME/jitsi-jvb:staging
+
+workflows:
+  version: 2
+  build_deploy_staging:
+    jobs:
+      - staging_build_image_and_push:
+          filters:
+            branches:
+              only: master
